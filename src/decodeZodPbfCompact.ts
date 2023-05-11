@@ -1,14 +1,14 @@
 import Pbf from "pbf";
 import { ZodLiteral, ZodType, ZodTypeAny } from "zod";
-import { ZodTypeTreeVisitor, visitZodType } from "./zodTypeTreeVisitor";
+import { visitZodType } from "./zodTypeTreeVisitor";
 
-export function decodeZodPbfStrict<T>(
+export function decodeZodPbfCompact<T>(
   buffer: Uint8Array | ArrayBuffer,
   type: ZodType<T>
 ): [number, Uint8Array] {
   const pbfReader = new Pbf(buffer);
   let currentNode: any;
-  const pbfSchemaVisitor: ZodTypeTreeVisitor = {
+  visitZodType(type, {
     undefined() {
       currentNode = undefined;
     },
@@ -70,7 +70,6 @@ export function decodeZodPbfStrict<T>(
 
       process(option);
     },
-  };
-  visitZodType(type, pbfSchemaVisitor);
+  });
   return currentNode;
 }

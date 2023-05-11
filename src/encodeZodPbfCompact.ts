@@ -1,14 +1,15 @@
 import Pbf from "pbf";
 import { ZodType, ZodTypeAny } from "zod";
-import { ZodTypeTreeVisitor, visitZodType } from "./zodTypeTreeVisitor";
+import { visitZodType } from "./zodTypeTreeVisitor";
 
-export function encodeZodPbfStrict<T>(
+export function encodeZodPbfCompact<T>(
   value: T,
   type: ZodType<T>
-): [number, Uint8Array] {
+): [Uint8Array, number] {
   const pbfWriter = new Pbf();
   let currentNode: any = value;
-  const pbfSchemaVisitor: ZodTypeTreeVisitor = {
+
+  visitZodType(type, {
     undefined() {
       // we don't have wo write undefineds at all, because they are always part of some tagged union
     },
@@ -16,14 +17,15 @@ export function encodeZodPbfStrict<T>(
       // we don't have wo write nulls at all, because they are always part of union
     },
     literal() {
-        // we don't have wo write literals at all, because they are always part of union and
-        // they don't contain no info at all
+      // we don't have wo write literals at all, because they are always part of union and
+      // actual value is constant and already contained in typedefinition
     },
     boolean() {
       pbfWriter.writeBoolean(currentNode);
     },
     number(zodType) {
       if (zodType._def.checks.some((check) => check.kind === "int")) {
+        // TODO: optimization for byte, where `min=0, max=255`
         pbfWriter.writeVarint(currentNode);
       } else {
         pbfWriter.writeFloat(currentNode);
@@ -45,6 +47,7 @@ export function encodeZodPbfStrict<T>(
       const currentArray = currentNode as any[];
       pbfWriter.writeVarint(currentArray.length);
       for (const value of currentArray) {
+        // TODO: optimization for byte, number, int
         currentNode = value;
         process(zodType._def.type);
       }
@@ -60,6 +63,14 @@ export function encodeZodPbfStrict<T>(
       const options: ZodTypeAny[] = zodType._def.options;
       let variantTag = 0;
       let alreadyEmitted = false;
+
+      // TODO: now, we brute forcifully try all union types :/
+      // it would be great to write precompiled matcher for unions, so we're using
+      // some smart way to detect proper union type fast.
+      // ideas:
+      //   discrimiation on `typeof`
+      //   extended typeof i.e `typeof` + null vs object vs array
+      //   discrimination based on some common field, aka discriminated union
       for (const optionType of options) {
         if (optionType.safeParse(currentNode).success) {
           if (alreadyEmitted) {
@@ -85,7 +96,6 @@ export function encodeZodPbfStrict<T>(
         );
       }
     },
-  };
-  visitZodType(type, pbfSchemaVisitor);
-  return [pbfWriter.pos, pbfWriter.buf];
+  });
+  return [pbfWriter.buf, pbfWriter.pos];
 }

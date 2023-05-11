@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { encodeZodPbfStrict } from "./encodeZodPbfStrict";
-import { decodeZodPbfStrict } from "./decodeZodPbfStrict";
+import { encodeZodPbfCompact } from "./encodeZodPbfCompact";
+import { decodeZodPbfCompact } from "./decodeZodPbfCompact";
 
 export const personSchema = z.object({
   foo: z.union([z.undefined(), z.null(), z.string()]),
@@ -11,7 +11,7 @@ export const personSchema = z.object({
   height: z.union([z.number(), z.null()]).optional(),
   favoriteFoods: z.array(z.string()).min(0).max(2).optional(),
   likesDogs: z.boolean().optional(),
-  x: z.union([z.literal('a'), z.literal('b'), z.literal(22)])
+  x: z.union([z.literal("a"), z.literal("b"), z.literal(22)]),
 });
 
 type Person = z.infer<typeof personSchema>;
@@ -24,14 +24,14 @@ const samplePerson: Person = {
   height: 2.2,
   favoriteFoods: ["x", "z"],
   foo: null,
-  x: 'b'
+  x: "b",
 };
 
-console.log("XXX", encodeZodPbfStrict(samplePerson, personSchema));
+console.log("XXX", encodeZodPbfCompact(samplePerson, personSchema));
 console.log(
   "YYY",
-  decodeZodPbfStrict(
-    encodeZodPbfStrict(samplePerson, personSchema)[1],
+  decodeZodPbfCompact(
+    encodeZodPbfCompact(samplePerson, personSchema)[0],
     personSchema
   )
 );
