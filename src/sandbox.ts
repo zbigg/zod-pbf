@@ -12,6 +12,7 @@ export const personSchema = z.object({
   favoriteFoods: z.array(z.string()).min(0).max(2).optional(),
   likesDogs: z.boolean().optional(),
   x: z.union([z.literal("a"), z.literal("b"), z.literal(22)]),
+  pos: z.array(z.number())
 });
 
 type Person = z.infer<typeof personSchema>;
@@ -25,6 +26,7 @@ const samplePerson: Person = {
   favoriteFoods: ["x", "z"],
   foo: null,
   x: "b",
+  pos: [1,2,3]
 };
 
 console.log("XXX", encodeZodPbfCompact(samplePerson, personSchema));

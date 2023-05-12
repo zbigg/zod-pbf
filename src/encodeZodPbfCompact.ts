@@ -1,5 +1,10 @@
 import Pbf from "pbf";
 import { ZodType, ZodTypeAny } from "zod";
+import {
+  detectNumberNumberWireEncoding,
+  NumberWireEncoding,
+} from "./compactModeUtils";
+import { isZodNumber } from "./typeUtils";
 import { visitZodType } from "./zodTypeTreeVisitor";
 
 export function encodeZodPbfCompact<T>(
@@ -24,11 +29,16 @@ export function encodeZodPbfCompact<T>(
       pbfWriter.writeBoolean(currentNode);
     },
     number(zodType) {
-      if (zodType._def.checks.some((check) => check.kind === "int")) {
-        // TODO: optimization for byte, where `min=0, max=255`
-        pbfWriter.writeVarint(currentNode);
-      } else {
-        pbfWriter.writeFloat(currentNode);
+      const wireEncoding = detectNumberNumberWireEncoding(zodType);
+      switch (wireEncoding) {
+        case NumberWireEncoding.Byte:
+        // there is no way to write just single byte, so we fall back to varint which max two bytes
+        case NumberWireEncoding.Varint:
+          pbfWriter.writeVarint(currentNode);
+          break;
+        default:
+          pbfWriter.writeDouble(currentNode);
+          break;
       }
     },
     string() {
@@ -45,10 +55,34 @@ export function encodeZodPbfCompact<T>(
     },
     array(zodType, process) {
       const currentArray = currentNode as any[];
+
+      // shortcuts for number arrays, not sure if needed at all
+      if (isZodNumber(zodType)) {
+        const wireEncoding = detectNumberNumberWireEncoding(zodType);
+        switch (wireEncoding) {
+          case NumberWireEncoding.Byte:
+            pbfWriter.writeBytes(currentArray as unknown as Uint8Array); // TODO: pbf typings don't allow bare array, while actual implementation does
+            return;
+          case NumberWireEncoding.Varint:
+            pbfWriter.writeVarint(currentArray.length);
+            for (const value of currentArray) {
+              pbfWriter.writeVarint(value);
+            }
+            return;
+          default:
+            pbfWriter.writeVarint(currentArray.length);
+            for (const value of currentArray) {
+              pbfWriter.writeDouble(value);
+            }
+            return;
+        }
+      }
+
       pbfWriter.writeVarint(currentArray.length);
       for (const value of currentArray) {
         // TODO: optimization for byte, number, int
         currentNode = value;
+
         process(zodType._def.type);
       }
     },

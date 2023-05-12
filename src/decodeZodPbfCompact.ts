@@ -1,5 +1,10 @@
 import Pbf from "pbf";
 import { ZodLiteral, ZodType, ZodTypeAny } from "zod";
+import {
+  detectNumberNumberWireEncoding,
+  NumberWireEncoding,
+} from "./compactModeUtils";
+import { isZodNumber } from "./typeUtils";
 import { visitZodType } from "./zodTypeTreeVisitor";
 
 export function decodeZodPbfCompact<T>(
@@ -22,13 +27,18 @@ export function decodeZodPbfCompact<T>(
       currentNode = pbfReader.readBoolean();
     },
     number(zodType) {
-      if (zodType._def.checks.some((check) => check.kind === "int")) {
-        currentNode = pbfReader.readVarint();
-      } else {
-        currentNode = pbfReader.readFloat();
+      const wireEncoding = detectNumberNumberWireEncoding(zodType);
+      switch (wireEncoding) {
+        case NumberWireEncoding.Byte:
+        case NumberWireEncoding.Varint:
+          currentNode = pbfReader.readVarint();
+          break;
+        default:
+          currentNode = pbfReader.readDouble();
+          break;
       }
     },
-    string(zodType) {
+    string() {
       currentNode = pbfReader.readString();
     },
     object(zodType, process) {
@@ -40,12 +50,42 @@ export function decodeZodPbfCompact<T>(
       currentNode = currentObject;
     },
     array(zodType, process) {
-      const length = pbfReader.readVarint();
-      const currentArray = new Array(length);
-      for (let i = 0; i < length; i++) {
-        process(zodType._def.type);
-        currentArray[i] = currentNode;
+      let currentArray: any[];
+      if (isZodNumber(zodType)) {
+        const wireEncoding = detectNumberNumberWireEncoding(zodType);
+        switch (wireEncoding) {
+          case NumberWireEncoding.Byte: {
+            const bytesRaw = pbfReader.readBytes();
+            currentArray = new Array(bytesRaw);
+            break;
+          }
+          case NumberWireEncoding.Varint: {
+            const length = pbfReader.readVarint();
+            currentArray = new Array(length);
+            for (let i = 0; i < length; i++) {
+              currentArray[i] = pbfReader.readVarint();
+            }
+            break;
+          }
+          default: {
+            const length = pbfReader.readVarint();
+            currentArray = new Array(length);
+            for (let i = 0; i < length; i++) {
+              currentArray[i] = pbfReader.readDouble();
+            }
+            break;
+          }
+        }
+      } else {
+        const length = pbfReader.readVarint();
+        currentArray = new Array(length);
+
+        for (let i = 0; i < length; i++) {
+          process(zodType._def.type);
+          currentArray[i] = currentNode;
+        }
       }
+
       currentNode = currentArray;
     },
     optional(zodType, process) {
