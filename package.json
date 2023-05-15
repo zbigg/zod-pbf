@@ -26,7 +26,8 @@
     "build": "yarn build:esm && yarn build:cjs",
     "build:esm": "tsc --build tsconfig.json",
     "build:cjs": "tsc --build tsconfig.cjs.json",
-    "watch": "tsc --build tsconfig.json --watch"
+    "watch": "tsc --build tsconfig.json --watch",
+    "clean": "rm -rf dist/cjs/*.js dist/esm *.tgz"
   },
   "devDependencies": {
     "@types/node": "^20.1.0",

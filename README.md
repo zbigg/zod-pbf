@@ -22,6 +22,23 @@ Only these types are supported as for now:
 * basic JS compounds: `ZodObject`, `ZodArray`
 * typed compounds: `ZodOptional`, `ZodUnion`
 
+
+## Usage
+
+CommonJS mode:
+```js
+const { decodeZodPbfCompact } = require("zod-pbf");
+const { encodeZodPbfCompact } = require("zod-pbf/lib/encodeZodPbfCompact.js");
+```
+
+ESM mode:
+
+```js
+import { decodeZodPbfCompact } from "zod-pbf";
+import { encodeZodPbfCompact } from "zod-pbf/lib/encodeZodPbfCompact.js";
+```
+
+
 ## Compact mode
 
 ***Warning***: Compact is _very_ fragile to changes in types.
