@@ -1,2 +1,2 @@
-export { encodeZodPbfCompact } from "./encodeZodPbfCompact";
-export { decodeZodPbfCompact } from "./decodeZodPbfCompact";
+export { encodeZodPbfCompact } from "./encodeZodPbfCompact.js";
+export { decodeZodPbfCompact } from "./decodeZodPbfCompact.js";

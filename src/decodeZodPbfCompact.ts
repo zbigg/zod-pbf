@@ -3,9 +3,9 @@ import { ZodLiteral, ZodType, ZodTypeAny } from "zod";
 import {
   detectNumberNumberWireEncoding,
   NumberWireEncoding,
-} from "./compactModeUtils";
-import { isZodNumber } from "./typeUtils";
-import { visitZodType } from "./zodTypeTreeVisitor";
+} from "./compactModeUtils.js";
+import { isZodNumber } from "./typeUtils.js";
+import { visitZodType } from "./zodTypeTreeVisitor.js";
 
 export function decodeZodPbfCompact<T>(
   buffer: Uint8Array | ArrayBuffer,

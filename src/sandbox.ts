@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { encodeZodPbfCompact } from "./encodeZodPbfCompact";
-import { decodeZodPbfCompact } from "./decodeZodPbfCompact";
+import { encodeZodPbfCompact } from "./encodeZodPbfCompact.js";
+import { decodeZodPbfCompact } from "./decodeZodPbfCompact.js";
 
 export const personSchema = z.object({
   foo: z.union([z.undefined(), z.null(), z.string()]),

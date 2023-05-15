@@ -1,2 +1,6 @@
 node_modules/
 yarn-error.log
+dist/*.tsbuildinfo
+dist/esm
+dist/cjs
+zod-pbf-*.tgz

@@ -7,7 +7,6 @@ import {
   ZodObject,
   ZodOptional,
   ZodString,
-  ZodType,
   ZodTypeAny,
   ZodUndefined,
   ZodUnion,
