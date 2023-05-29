@@ -28,7 +28,7 @@ Only these types are supported as for now:
 CommonJS mode:
 ```js
 const { decodeZodPbfCompact } = require("zod-pbf");
-const { encodeZodPbfCompact } = require("zod-pbf/lib/encodeZodPbfCompact.js");
+const { encodeZodPbfCompact } = require("zod-pbf/lib/encodeZodPbfCompact");
 ```
 
 ESM mode:
